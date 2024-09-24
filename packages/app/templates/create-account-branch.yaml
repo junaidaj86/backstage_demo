@@ -1,0 +1,19 @@
+apiVersion: backstage.io/v1alpha1
+kind: Template
+metadata:
+  name: create-account-branch
+  title: Create a New Account Management Branch
+  description: A template to create a new branch in the account management repository
+spec:
+  owner: junaidaj86@gmail.com
+  steps:
+    - id: create-branch
+      action: scaffolder:github:branch:create
+      input:
+        repoUrl: https://github.com/junaidaj86/account-management
+        branchName: {{ parameters.branchName }}
+  parameters:
+    - title: Branch Name
+      description: The name of the new branch to create
+      required: true
+      type: string

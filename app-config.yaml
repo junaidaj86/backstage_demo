@@ -3,7 +3,7 @@ app:
   baseUrl: http://localhost:3000
 
 organization:
-  name: My Company
+  name: Scania AB
 
 backend:
   # Used for enabling authentication, secret is shared by all backend plugins
@@ -28,8 +28,14 @@ backend:
   # This is for local development only, it is not recommended to use this in production
   # The production database configuration is stored in app-config.production.yaml
   database:
-    client: better-sqlite3
-    connection: ':memory:'
+    # client: better-sqlite3
+    # connection: ':memory:'
+    client: pg
+    connection:
+      host: 127.0.0.1
+      port: 5432
+      user: admin
+      password: admin
   # workingDirectory: /tmp # Use this to configure a working directory for the scaffolder, defaults to the OS temp-dir
 
 integrations:
@@ -67,16 +73,51 @@ auth:
   providers:
     # See https://backstage.io/docs/auth/guest/provider
     guest: {}
+    github:
+      development:
+        clientId: Ov23liJqOCcdONYP6cId
+        clientSecret: 01cbb8f3c9235fc9448280af7f3a032e938066d4
+        signIn:
+          resolvers:
+            # Matches the GitHub username with the Backstage user entity name.
+            # See https://backstage.io/docs/auth/github/provider#resolvers for more resolvers.
+            - resolver: usernameMatchingUserEntityName
 
+# see https://backstage.io/docs/features/software-templates/configuration for software template options
 scaffolder:
-  # see https://backstage.io/docs/features/software-templates/configuration for software template options
+  catalog:
+    locations:
+      - type: url
+        target: ./templates/*.yaml  # Adjust if necessary
+
+  
 
 catalog:
   import:
     entityFilename: catalog-info.yaml
     pullRequestBranchName: backstage-integration
+    location: github:junaidaj86/test/catalog-info.yaml
   rules:
     - allow: [Component, System, API, Resource, Location]
+  providers:
+    kubernetes:
+      local-cluster:
+        cluster: docker-desktop
+        processor:
+          namespaceOverride: default
+          defaultOwner: guests
+        schedule:
+          frequency:
+            seconds: 30
+          timeout:
+            seconds: 5
+    kafka:
+      clientId: backstage
+      clusters:
+        - name: prod
+          brokers:
+            - localhost:9092
+
   locations:
     # Local example data, file locations are relative to the backend process, typically `packages/backend`
     - type: file
@@ -93,6 +134,12 @@ catalog:
       target: ../../examples/org.yaml
       rules:
         - allow: [User, Group]
+    # Import all repositories in your GitHub account
+    - type: url
+      target: https://github.com/junaidaj86/accountmanagement/blob/main/catalog-info.yaml
+      #target: https://github.com/junaidaj86/inventory_management_system/blob/main/catalog-info.yaml
+      rules:
+        - allow: [Component, System, API, Resource, Location, Service]
 
     ## Uncomment these lines to add more example data
     # - type: url
@@ -105,6 +152,17 @@ catalog:
     #     - allow: [User, Group]
 
 kubernetes:
+  serviceLocatorMethod:
+    type: 'multiTenant'
+  clusterLocatorMethods:
+    - type: 'config'
+      clusters:
+        - url: https://127.0.0.1:51191/
+          name: minikube
+          authProvider: 'serviceAccount'
+          skipTLSVerify: true
+          skipMetricsLookup: false
+          serviceAccountToken: eyJhbGciOiJSUzI1NiIsImtpZCI6IllRNTBCQUE5MVo1dTRKbV9TakVwR21kUkxCT3FVSzI0alNDZ2N5c1o0d00ifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI3MjE1Mzg4LCJpYXQiOjE3MjcyMTE3ODgsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiMTNhNGIxYTMtNzJkMy00ZDBhLTkxM2QtNjBmNzBkM2YyMWNiIiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJkZWZhdWx0Iiwic2VydmljZWFjY291bnQiOnsibmFtZSI6ImJhY2tzdGFnZS1zYSIsInVpZCI6IjkzMTlkYzYyLTlmMmUtNDU0My04ZDg5LTNkNzVkYzVlMWRjNCJ9fSwibmJmIjoxNzI3MjExNzg4LCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6ZGVmYXVsdDpiYWNrc3RhZ2Utc2EifQ.p2JiP-ZVO6z6dTpgfVEP4IpTh74tpH7dFuHlMLGZeFUM95CM-uiIhf15-J4mgFLXF4WYua_cJpFTH6SDRVJmdor4fRDhO7ZjvG7dJIleNW9uh3vH_xRqZnjlSGKM-pQZGWGkNNx6BwAD4juwnxVqn3iZRk03gOR9QiNJZF6iEzmrQidS2nipTplvoc4HRbhHI4t3Y388TYeDLE27quzug1nOVOdAQVOlHGQP0YvXa6OUqttX9McyTIkP-S3nBWHM3ZyCJnP2-VZw9MROHp5gb2xEw4WP45pYJZS-zI_wAuiROIbYBsp9tgLJdbnr-Lap9mFaY547dX-Ea2sb9vA_AQ
   # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options
 
 # see https://backstage.io/docs/permissions/getting-started for more on the permission framework

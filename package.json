@@ -53,5 +53,9 @@
       "prettier --write"
     ]
   },
-  "packageManager": "yarn@4.4.1"
+  "packageManager": "yarn@4.4.1",
+  "dependencies": {
+    "@backstage/plugin-kafka": "^0.3.35",
+    "dotenv": "^16.4.5"
+  }
 }

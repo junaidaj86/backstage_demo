@@ -7,8 +7,13 @@
  */
 
 import { createBackend } from '@backstage/backend-defaults';
+//import { createBranchAction } from './plugins/scaffolder/actions/createBranchAction';
+
+
 
 const backend = createBackend();
+
+
 
 backend.add(import('@backstage/plugin-app-backend/alpha'));
 backend.add(import('@backstage/plugin-proxy-backend/alpha'));
@@ -50,5 +55,11 @@ backend.add(import('@backstage/plugin-search-backend-module-techdocs/alpha'));
 
 // kubernetes
 backend.add(import('@backstage/plugin-kubernetes-backend/alpha'));
+
+// custoime changes added by me
+ backend.add(import('@backstage/plugin-auth-backend-module-github-provider'));
+ //backend.add(createBranchAction);
+
+
 
 backend.start();

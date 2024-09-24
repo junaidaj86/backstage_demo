@@ -3,10 +3,9 @@ kind: Component
 metadata:
   name: backstage-for-scania
   description: An example of a Backstage application.
-  # Example for optional annotations
-  # annotations:
-  #   github.com/project-slug: backstage/backstage
-  #   backstage.io/techdocs-ref: dir:.
+  annotations:
+    github.com/project-slug: junaidaj86/test  # GitHub repository slug
+    #backstage.io/techdocs-ref: dir:.            # Reference for TechDocs if applicable
 spec:
   type: website
   owner: john@example.com
