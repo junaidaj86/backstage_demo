@@ -56,9 +56,8 @@ import { ReportIssue } from '@backstage/plugin-techdocs-module-addons-contrib';
 
 import {
   EntityKubernetesContent,
+  isKubernetesAvailable,
 } from '@backstage/plugin-kubernetes';
-
-import { EntityKafkaContent } from '@backstage/plugin-kafka';
 
 const techdocsContent = (
   <EntityTechdocsContent>
@@ -156,14 +155,12 @@ const serviceEntityPage = (
       {cicdContent}
     </EntityLayout.Route>
 
-    <EntityLayout.Route path="/kubernetes" title="Kubernetes">
-      <EntityKubernetesContent refreshIntervalMs={30000} />
-    </EntityLayout.Route>
     <EntityLayout.Route
-      path="/kafka"
-      title="kafka"
+      path="/kubernetes"
+      title="Kubernetes"
+      if={isKubernetesAvailable}
     >
-      <EntityKafkaContent />
+      <EntityKubernetesContent />
     </EntityLayout.Route>
 
     <EntityLayout.Route path="/api" title="API">
@@ -207,17 +204,10 @@ const websiteEntityPage = (
     <EntityLayout.Route
       path="/kubernetes"
       title="Kubernetes"
+      if={isKubernetesAvailable}
     >
       <EntityKubernetesContent />
     </EntityLayout.Route>
-
-    <EntityLayout.Route
-      path="/kafka"
-      title="kafka"
-    >
-      <EntityKafkaContent />
-    </EntityLayout.Route>
-
 
     <EntityLayout.Route path="/dependencies" title="Dependencies">
       <Grid container spacing={3} alignItems="stretch">
