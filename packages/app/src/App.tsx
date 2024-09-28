@@ -104,7 +104,7 @@ const routes = (
           <CatalogImportPage />
         </RequirePermission>
       }
-    />
+    /> 
     <Route path="/search" element={<SearchPage />}>
       {searchPage}
     </Route>

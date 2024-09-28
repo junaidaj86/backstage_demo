@@ -58,7 +58,14 @@ import {
   EntityKubernetesContent,
 } from '@backstage/plugin-kubernetes';
 
+
+// Added by me
 import { EntityKafkaContent } from '@backstage/plugin-kafka';
+
+import {
+  EntityGithubActionsContent,
+  isGithubActionsAvailable,
+} from '@backstage-community/plugin-github-actions';
 
 const techdocsContent = (
   <EntityTechdocsContent>
@@ -164,6 +171,10 @@ const serviceEntityPage = (
       title="kafka"
     >
       <EntityKafkaContent />
+    </EntityLayout.Route>
+
+    <EntityLayout.Route path="/github-actions" title="GitHub Actions">
+      <EntityGithubActionsContent />
     </EntityLayout.Route>
 
     <EntityLayout.Route path="/api" title="API">
