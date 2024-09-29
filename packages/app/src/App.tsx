@@ -40,6 +40,7 @@ import { catalogEntityCreatePermission } from '@backstage/plugin-catalog-common/
 // custom changes from me
 import { githubAuthApiRef } from '@backstage/core-plugin-api';
 import { MyAwsomePluginPage } from '@internal/backstage-plugin-my-awsome-plugin';
+import { KafkaManagerPage } from '@internal/backstage-plugin-kafka-manager';
 
 const app = createApp({
   apis,
@@ -111,6 +112,7 @@ const routes = (
     <Route path="/settings" element={<UserSettingsPage />} />
     <Route path="/catalog-graph" element={<CatalogGraphPage />} />
     <Route path="/my-awsome-plugin" element={<MyAwsomePluginPage />} />
+    <Route path="/kafka-manager" element={<KafkaManagerPage />} />
   </FlatRoutes>
 );
 

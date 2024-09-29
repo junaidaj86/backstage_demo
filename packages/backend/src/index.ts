@@ -62,6 +62,7 @@ backend.add(import('@backstage/plugin-kubernetes-backend/alpha'));
 
 backend.add(import('@backstage-community/plugin-kafka-backend/alpha'))
 
+backend.add(import('@internal/backstage-plugin-kafka-manager-backend-backend'));
 backend.start();
 
 

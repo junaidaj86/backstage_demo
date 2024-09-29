@@ -67,6 +67,8 @@ import {
   isGithubActionsAvailable,
 } from '@backstage-community/plugin-github-actions';
 
+import { kafkaManagerPlugin, KafkaManagerPage } from '@internal/backstage-plugin-kafka-manager';
+
 const techdocsContent = (
   <EntityTechdocsContent>
     <TechDocsAddons>
@@ -176,6 +178,13 @@ const serviceEntityPage = (
     <EntityLayout.Route path="/github-actions" title="GitHub Actions">
       <EntityGithubActionsContent />
     </EntityLayout.Route>
+
+    <EntityLayout.Route path="/kafka-manager" title="kafka manager">
+      <KafkaManagerPage />
+    </EntityLayout.Route>
+
+
+    
 
     <EntityLayout.Route path="/api" title="API">
       <Grid container spacing={3} alignItems="stretch">
