@@ -32,18 +32,11 @@ import {
 } from '@backstage/core-components';
 import { AddCircle, RemoveCircle } from '@material-ui/icons';
 import { KafkaBackendClient } from '../../api/KafkaApi';
-import { ConsumerGroupOffsetsResponse, KafkaTopicsResponse } from '../../api/types';
+import { ConsumerGroupOffsetsResponse, KafkaCreateTopicResponse, KafkaTopicsResponse, TopicConfig } from '../../api/types';
 import { discoveryApiRef, identityApiRef } from '@backstage/core-plugin-api';
 import { useApi } from '@backstage/core-plugin-api';
-import { TopicMetadata } from '@internal/backstage-plugin-kafka-manager-backend-backend/src/types/types';
 
-interface TopicConfig {
-  topicName: string;
-  numPartitions?: number;
-  replicationFactor?: number;
-  replicaAssignment?: Array<{ partition: number; replicas: number[] }>;
-  configEntries?: Array<{ name: string; value: string }>;
-}
+
 
 // Example Kafka configuration keys
 const configOptions = [
@@ -78,10 +71,9 @@ const fetchTopics = async (
     }));
 };
 
-const createTopic = async (topicConfig: TopicConfig) => {
-  console.log('Creating topic', topicConfig);
-  // Call backend API to create the topic
-  return true;
+const createTopic = async (topicConfig: TopicConfig,  kafkaClient: KafkaBackendClient) => {
+  const response: KafkaCreateTopicResponse = await kafkaClient.createTopic(topicConfig);
+  return response;
 };
 
 export const KafkaManagement = () => {
@@ -155,8 +147,8 @@ export const KafkaManagement = () => {
 
   // Handle topic creation
   const handleCreateTopic = async () => {
-    const success = await createTopic(newTopic);
-    if (success) {
+    const res: KafkaCreateTopicResponse = await createTopic(newTopic, kafkaClient);
+    if (res.success) {
       // Refresh the topic list
       setTopics([...topics, newTopic]);
       handleClose(); // Close the modal on success

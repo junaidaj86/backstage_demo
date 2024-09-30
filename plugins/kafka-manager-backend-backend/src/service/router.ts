@@ -3,12 +3,13 @@ import {
   LoggerService,
   RootConfigService,
 } from '@backstage/backend-plugin-api';
-import express from 'express';
+import express, { Request, Response } from 'express';
 import Router from 'express-promise-router';
 import { KafkaApi, KafkaJsApiImpl } from './KafkaApi';
 import { getClusterDetails } from '../config/ClusterReader';
 import _ from 'lodash';
 import { NotFoundError } from '@backstage/errors';
+import { TopicConfig } from '../types/types';
 
 export interface RouterOptions {
   logger: LoggerService;
@@ -58,7 +59,6 @@ export async function createRouter(
       const clusterId = 'localhost';
       const consumerId = 'consumerId';
       const kafkaApi = kafkaApiByClusterName[clusterId];
-      console.log("====="+ JSON.stringify(kafkaApi, undefined, 2))
       if (!kafkaApi) {
         const candidates = Object.keys(kafkaApiByClusterName)
           .map(n => `"${n}"`)
@@ -90,8 +90,7 @@ export async function createRouter(
 
       const data = kafkaApi.api.getCompleteClusterSummary();
 
-      console.log("==========================================")
-      console.log(JSON.stringify(data, undefined, 2))
+   
 
       res.json({ consumerId, offsets: groupWithTopicOffsets.flat() });
     } catch (error) {
@@ -100,51 +99,84 @@ export async function createRouter(
     }
   });
 
-
   router.get('/fetch-topics', async (req, res) => {
     try {
-        const clusterId = 'localhost'; // Adjust as necessary to get the correct cluster ID
-        const kafkaApi = kafkaApiByClusterName[clusterId];
-        
-        // Log the kafkaApi being used
-        console.log("=====" + JSON.stringify(kafkaApi, undefined, 2));
-        
-        if (!kafkaApi) {
-            const candidates = Object.keys(kafkaApiByClusterName)
-                .map(n => `"${n}"`)
-                .join(', ');
-            throw new NotFoundError(
-                `Found no configured cluster "${clusterId}", candidates are ${candidates}`
-            );
-        }
+      const clusterId = 'localhost'; // Adjust as necessary to get the correct cluster ID
+      const kafkaApi = kafkaApiByClusterName[clusterId];
 
-       
-        
-        // Fetch topics using the Kafka API
-        const topics = await kafkaApi.api.fetchAllTopicsMetadata(); // Assumes there's a method to fetch topics
+      // Log the kafkaApi being used
+      if (!kafkaApi) {
+        const candidates = Object.keys(kafkaApiByClusterName)
+          .map(n => `"${n}"`)
+          .join(', ');
+        throw new NotFoundError(
+          `Found no configured cluster "${clusterId}", candidates are ${candidates}`,
+        );
+      }
 
-        // Process topics to a suitable format (if needed)
-        const formattedTopics = topics?.map(topic => ({
-            name: topic.name,
-            partitions: topic.partitions.map(partition => ({
-                id: partition.partitionId,
-                leader: partition.leader,
-                replicas: partition.replicas,
-                isr: partition.isr,
-                partitionErrorCode: partition.partitionErrorCode,
-            })),
-        }));
+      // Fetch topics using the Kafka API
+      const topics = await kafkaApi.api.fetchAllTopicsMetadata(); // Assumes there's a method to fetch topics
 
-        console.log("==============================")
-        console.log(JSON.stringify(formattedTopics, undefined,2));
+      // Process topics to a suitable format (if needed)
+      const formattedTopics = topics?.map(topic => ({
+        name: topic.name,
+        partitions: topic.partitions.map(partition => ({
+          id: partition.partitionId,
+          leader: partition.leader,
+          replicas: partition.replicas,
+          isr: partition.isr,
+          partitionErrorCode: partition.partitionErrorCode,
+        })),
+      }));
 
-        res.json({ topics: formattedTopics });
+
+      res.json({ topics: formattedTopics });
     } catch (error) {
-        logger.error(`Failed to fetch Kafka topics: ${error.message}`);
-        res.status(500).json({ error: 'Failed to fetch Kafka topics' });
+      logger.error(`Failed to fetch Kafka topics: ${error.message}`);
+      res.status(500).json({ error: 'Failed to fetch Kafka topics' });
     }
-});
+  });
 
+  router.post('/create-topic', async (req: Request, res: Response) => {
+    try {
+      // Extract topic configuration from the request body
+      const topicConfig: TopicConfig = req.body;
+
+      // Validate the input
+      if (!topicConfig.topicName) {
+        return res.status(400).json({ error: 'Topic name is required.' });
+      }
+
+      const clusterId = 'localhost'; // Adjust as necessary to get the correct cluster ID
+      const kafkaApi = kafkaApiByClusterName[clusterId];
+
+      // Log the kafkaApi being used
+      if (!kafkaApi) {
+        const candidates = Object.keys(kafkaApiByClusterName)
+          .map(n => `"${n}"`)
+          .join(', ');
+        throw new NotFoundError(
+          `Found no configured cluster "${clusterId}", candidates are ${candidates}`,
+        );
+      }
+
+      const success = await kafkaApi.api.createTopic(topicConfig);
+      if (success) {
+        res.status(201).json({
+          success: true,
+          message: `Topic "${topicConfig.topicName}" created successfully.`,
+        });
+      } else {
+        res.status(500).json({
+          success: false,
+          message: `Failed to create topic "${topicConfig.topicName}".`,
+        });
+      }
+    } catch (error) {
+      console.error('Error creating Kafka topic:', error);
+      res.status(500).json({ error: 'Error creating Kafka topic.' });
+    }
+  });
 
   const middleware = MiddlewareFactory.create({ logger, config });
 

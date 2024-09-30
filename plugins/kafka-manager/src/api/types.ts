@@ -50,15 +50,22 @@ export interface KafkaDashboardApi {
   ): { url?: string };
 }
 
+export interface KafkaCreateTopicResponse {
+  success: boolean;
+  message: string;
+}
 
+export interface TopicConfig {
+  topicName: string; // Required: The name of the Kafka topic
+  numPartitions?: number; // Optional: Number of partitions
+  replicationFactor?: number; // Optional: Replication factor
+  replicaAssignment?: number[][]; // Optional: Replica assignment for partitions
+  configEntries?: ConfigEntry[]; // Optional: Array of config entries for topic settings
+}
 
-
-
-
-interface TopicConfig {
-  topicName: string;
-  numPartitions?: number;
-  replicationFactor?: number;
+export interface ConfigEntry {
+  name: string;
+  value: string;
 }
 
 

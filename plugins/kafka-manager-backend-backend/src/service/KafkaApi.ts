@@ -171,14 +171,7 @@ export class KafkaJsApiImpl implements KafkaApi {
           const memberMetadata =
             AssignerProtocol.MemberMetadata.decode(memberMetadataBuffer);
 
-          console.log(
-            'Member Assignment:',
-            JSON.stringify(memberAssignment, null, 2),
-          );
-          console.log(
-            'Member Metadata:',
-            JSON.stringify(memberMetadata, null, 2),
-          );
+
 
           return memberMetadata.topics.map(topic => {
             const assignedPartitions = memberAssignment.assignment[topic]; // Accessing the assignment for this topic
@@ -203,9 +196,7 @@ export class KafkaJsApiImpl implements KafkaApi {
       // Flatten the consumerGroups array since each promise returns an array
       const flattenedConsumerGroups = consumerGroups.flat();
 
-      console.log('=========consumerGroups=============');
-      console.log(JSON.stringify(flattenedConsumerGroups, null, 2));
-      console.log('=========consumerGroups=============');
+     
 
       // Assemble the final response
       const response = {
@@ -215,9 +206,7 @@ export class KafkaJsApiImpl implements KafkaApi {
         topics,
         consumerGroups: flattenedConsumerGroups, // Use flattened consumer groups
       };
-      console.log('=========result=============');
-      console.log(JSON.stringify(response, null, 2));
-      console.log('=========result=============');
+
       return response;
     } catch (error) {
       console.error('Error fetching Kafka cluster info:', error);
