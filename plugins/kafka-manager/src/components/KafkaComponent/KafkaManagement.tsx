@@ -68,6 +68,9 @@ const fetchTopics = async (kafkaClient: KafkaBackendClient): Promise<TopicMetada
       }))
     }));
 
+    console.log("================================")
+    console.log(JSON.stringify(transformedTopics, undefined,2))
+
   return transformedTopics;
 };
 
@@ -91,6 +94,9 @@ export const KafkaManagement = () => {
   // Pagination State
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(5);
+  
+  // State for expandable rows
+  const [expandedRows, setExpandedRows] = useState<string[]>([]);
 
   const discoveryApi = useApi(discoveryApiRef);
   const identityApi = useApi(identityApiRef);
@@ -161,6 +167,15 @@ export const KafkaManagement = () => {
     setPage(0);
   };
 
+  // Function to toggle row expansion
+  const handleRowClick = (topicName: string) => {
+    setExpandedRows(prev =>
+      prev.includes(topicName)
+        ? prev.filter(name => name !== topicName)
+        : [...prev, topicName]
+    );
+  };
+
   return (
     <Page themeId="tool">
       <Content>
@@ -190,25 +205,66 @@ export const KafkaManagement = () => {
                   </TableHead>
                   <TableBody>
                     {topics.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((topic, index) => (
-                      <TableRow key={index}>
-                        <TableCell component="th" scope="row">
-                          {topic.name}
-                        </TableCell>
-                        <TableCell align="right">
-                          {topic.partitions.length}
-                        </TableCell>
-                        <TableCell align="right">
-                          {topic.offset}
-                        </TableCell>
-                        <TableCell align="right">
-                          {topic.lag}
-                        </TableCell>
-                        <TableCell align="right">
-                          <IconButton onClick={() => handleDeleteTopic(topic.name)}>
-                            <Delete color="secondary" />
-                          </IconButton>
-                        </TableCell>
-                      </TableRow>
+                      <React.Fragment key={topic.name}>
+                        <TableRow
+                          hover
+                          onClick={() => handleRowClick(topic.name)}
+                          style={{ cursor: 'pointer' }}
+                        >
+                          <TableCell component="th" scope="row">
+                            {topic.name}
+                          </TableCell>
+                          <TableCell align="right">
+                            {topic.partitions.length}
+                          </TableCell>
+                          <TableCell align="right">
+                            {topic.offset}
+                          </TableCell>
+                          <TableCell align="right">
+                            {topic.lag}
+                          </TableCell>
+                          <TableCell align="right">
+                            <IconButton onClick={() => handleDeleteTopic(topic.name)}>
+                              <Delete color="secondary" />
+                            </IconButton>
+                          </TableCell>
+                        </TableRow>
+                        <TableRow>
+                          <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={5}>
+                            <Collapse in={expandedRows.includes(topic.name)} timeout="auto" unmountOnExit>
+                              <div style={{ padding: '16px' }}>
+                                <Typography variant="h6" gutterBottom>
+                                  Partition Details
+                                </Typography>
+                                <Table size="small">
+                                  <TableHead>
+                                    <TableRow>
+                                      <TableCell>Partition ID</TableCell>
+                                      <TableCell>Leader</TableCell>
+                                      <TableCell>Replicas</TableCell>
+                                      <TableCell>ISR</TableCell>
+                                      <TableCell>Offset</TableCell>
+                                      <TableCell>Lag</TableCell>
+                                    </TableRow>
+                                  </TableHead>
+                                  <TableBody>
+                                    {topic.partitions.map(partition => (
+                                      <TableRow key={partition.id}>
+                                        <TableCell>{partition.id}</TableCell>
+                                        <TableCell>{partition.leader}</TableCell>
+                                        <TableCell>{partition.replicas}</TableCell>
+                                        <TableCell>{partition.isr}</TableCell>
+                                        <TableCell>{partition.offset}</TableCell>
+                                        <TableCell>{partition.lag}</TableCell>
+                                      </TableRow>
+                                    ))}
+                                  </TableBody>
+                                </Table>
+                              </div>
+                            </Collapse>
+                          </TableCell>
+                        </TableRow>
+                      </React.Fragment>
                     ))}
                   </TableBody>
                 </Table>
@@ -226,18 +282,13 @@ export const KafkaManagement = () => {
           </Grid>
         </Grid>
 
-        {/* Dialog Modal for adding a new topic */}
-        <Dialog
-          open={open}
-          onClose={handleClose}
-          aria-labelledby="form-dialog-title"
-        >
-          <DialogTitle id="form-dialog-title">Create New Topic</DialogTitle>
+        {/* Add Topic Dialog */}
+        <Dialog open={open} onClose={handleClose}>
+          <DialogTitle>Create New Topic</DialogTitle>
           <DialogContent>
             <DialogContentText>
-              Fill out the basic fields to create a new Kafka topic.
+              To create a new Kafka topic, please enter the details below.
             </DialogContentText>
-            {/* Basic Topic Settings */}
             <TextField
               autoFocus
               margin="dense"
@@ -266,7 +317,6 @@ export const KafkaManagement = () => {
               value={newTopic.replicationFactor}
               onChange={handleInputChange}
             />
-
             {/* Advanced Settings Link */}
             <Link
               component="button"

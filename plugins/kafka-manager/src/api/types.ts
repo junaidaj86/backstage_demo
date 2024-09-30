@@ -73,8 +73,8 @@ export interface ConfigEntry {
 export interface PartitionMetadata {
   id: number;
   leader: number;
-  replicas: number[];
-  isr: number[];
+  replicas: number;
+  isr: number;
   partitionErrorCode: number;
   offset: string;                   // Current offset as a string
   lag: string;
