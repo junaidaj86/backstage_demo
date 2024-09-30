@@ -16,7 +16,7 @@ export const KafkaManagerPage = kafkaManagerPlugin.provide(
   createRoutableExtension({
     name: 'KafkaManagerPage',
     component: () =>
-      import('./components/ExampleComponent').then(m => m.ExampleComponent),
+      import('./components/KafkaComponent').then(m => m.KafkaManagement),
     mountPoint: rootRouteRef,
   }),
 );

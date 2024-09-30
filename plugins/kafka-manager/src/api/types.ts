@@ -49,3 +49,34 @@ export interface KafkaDashboardApi {
     entity: Entity,
   ): { url?: string };
 }
+
+
+
+
+
+
+interface TopicConfig {
+  topicName: string;
+  numPartitions?: number;
+  replicationFactor?: number;
+}
+
+
+// Assuming the structure based on your JSON response
+export interface PartitionMetadata {
+  id: number;
+  leader: number;
+  replicas: number[];
+  isr: number[];
+  partitionErrorCode: number;
+}
+
+export interface TopicMetadata {
+  name: string; // Should match the topic name
+  partitions: PartitionMetadata[]; // Should contain partition information
+}
+
+// This interface represents the entire response from your Kafka backend
+export interface KafkaTopicsResponse {
+  topics: TopicMetadata[]; // This should return the topics as an array of TopicMetadata
+}

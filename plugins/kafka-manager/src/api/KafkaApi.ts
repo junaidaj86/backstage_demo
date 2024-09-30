@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-import { KafkaApi, ConsumerGroupOffsetsResponse } from './types';
+import { KafkaApi, ConsumerGroupOffsetsResponse, KafkaTopicsResponse } from './types';
 import { DiscoveryApi, IdentityApi } from '@backstage/core-plugin-api';
 
 export class KafkaBackendClient implements KafkaApi {
@@ -55,4 +55,34 @@ export class KafkaBackendClient implements KafkaApi {
       `/cluster-info`,
     );
   }
+
+
+  private async internalTopicFetch(path: string): Promise<any> {
+    const url = `${await this.discoveryApi.getBaseUrl('kafka-manager-backend')}${path}`;
+    const { token: idToken } = await this.identityApi.getCredentials();
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken && { Authorization: `Bearer ${idToken}` }),
+      },
+    });
+
+    if (!response.ok) {
+      const payload = await response.text();
+      const message = `Request failed with ${response.status} ${response.statusText}, ${payload}`;
+      throw new Error(message);
+    }
+
+    return await response.json();
+  }
+  async fetchTopics(
+  ): Promise<KafkaTopicsResponse> {
+    return await this.internalTopicFetch(
+      `/fetch-topics`,
+    );
+  }
+
+
+
 }

@@ -157,13 +157,12 @@ kubernetes:
   clusterLocatorMethods:
     - type: 'config'
       clusters:
-        - url: https://127.0.0.1:51191/
+        - url: https://127.0.0.1:51115/
           name: minikube
           authProvider: 'serviceAccount'
           skipTLSVerify: true
           skipMetricsLookup: false
-          serviceAccountToken: eyJhbGciOiJSUzI1NiIsImtpZCI6IllRNTBCQUE5MVo1dTRKbV9TakVwR21kUkxCT3FVSzI0alNDZ2N5c1o0d00ifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI3NTI3NTc1LCJpYXQiOjE3Mjc1MjM5NzUsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiMDA4NGY0N2UtOTAyYS00MTU3LWI0MmQtOTlmYWJmMDdkMmU5Iiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJkZWZhdWx0Iiwic2VydmljZWFjY291bnQiOnsibmFtZSI6ImJhY2tzdGFnZS1zYSIsInVpZCI6IjkzMTlkYzYyLTlmMmUtNDU0My04ZDg5LTNkNzVkYzVlMWRjNCJ9fSwibmJmIjoxNzI3NTIzOTc1LCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6ZGVmYXVsdDpiYWNrc3RhZ2Utc2EifQ.RkIvbGB3Lb8hrcedLWqblLU7ukz4RwY2Plyx2gBnv2OUNUuXE4e7wxqUo-pwb1kjDBpzCGS0czMii29BBT55xG0oGGcdMeSJIWP46USAtwMk7P0ZvYUup1dN00eUnaXvscSPtCvZnZ2kOH2j_JgaUH-eEOIpL_uu9zZdf1HYnX2GGX-7FqkBFRxyzYdPIkC1pL4dRUQCv1dTW-rJtoqwxprJJ8-7RI1SnETKJTvjOwiE9ioLjB2Vlol-b_-itSz4Jd4QQewfjWs68xCGzXTtUvE1yLkXfLPNZR4AC1QmtJRk8QBNAnXLpp3UKloWHsnivIgwerjnrcIzfNU0UcgYjQ
-          tags: # Add tags to identify or categorize your cluster
+          serviceAccountToken: eyJhbGciOiJSUzI1NiIsImtpZCI6IllRNTBCQUE5MVo1dTRKbV9TakVwR21kUkxCT3FVSzI0alNDZ2N5c1o0d00ifQ.eyJhdWQiOlsiaHR0cHM6Ly9rdWJlcm5ldGVzLmRlZmF1bHQuc3ZjLmNsdXN0ZXIubG9jYWwiXSwiZXhwIjoxNzI3NjQ3MTE3LCJpYXQiOjE3Mjc2NDM1MTcsImlzcyI6Imh0dHBzOi8va3ViZXJuZXRlcy5kZWZhdWx0LnN2Yy5jbHVzdGVyLmxvY2FsIiwianRpIjoiN2NiN2NiYTUtYWY4Zi00YzkwLWIzODItZTExZGYzNWVmMDY4Iiwia3ViZXJuZXRlcy5pbyI6eyJuYW1lc3BhY2UiOiJkZWZhdWx0Iiwic2VydmljZWFjY291bnQiOnsibmFtZSI6ImJhY2tzdGFnZS1zYSIsInVpZCI6IjkzMTlkYzYyLTlmMmUtNDU0My04ZDg5LTNkNzVkYzVlMWRjNCJ9fSwibmJmIjoxNzI3NjQzNTE3LCJzdWIiOiJzeXN0ZW06c2VydmljZWFjY291bnQ6ZGVmYXVsdDpiYWNrc3RhZ2Utc2EifQ.N1ruN1L54aXb0DwpFJE85Ths1dnrngxhNgZqvS8XoDuUc_RHw-PteokWWMoCujvzZnAso9uj9sBiN41OVZA7ezVSXQTpRRxTXrJ38P-fwtdXfvZLY01CVVx4Hqs50fg7gHTHDg_s3FPrrDMNqW3Vts5UT51wDCzNpbokh8-6bodwYoHAfsML8ylPvLvItpywGWBPGVe3kXp1wvizDzCswY6ktyOXxzw0HwSPtZkFZPaYk5FvHRDcuewn8lK0hktEsrLdEmc3lgu6htQKfWXLoekyqapeM9lwzlunFK902hgE0ll43w7tfm3R_RA6PPin-LQbP9k5_MIKevm_l7DTwg
             - production
             - minikube
   # see https://backstage.io/docs/features/kubernetes/configuration for kubernetes configuration options

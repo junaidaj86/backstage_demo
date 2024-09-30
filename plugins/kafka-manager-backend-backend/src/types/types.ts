@@ -49,3 +49,18 @@ export type SaslConfig =
         replicaAssignment?: Array<{ partition: number; replicas: number[] }>; // Optional
         configEntries?: Array<{ name: string; value: string }>; // Optional
     }
+
+
+    export interface PartitionMetadata {
+      partitionId: number;
+      leader: number;
+      replicas: number[];
+      isr: number[];
+      partitionErrorCode: number;
+    }
+    
+    export interface TopicMetadata {
+      name: string;
+      partitions: PartitionMetadata[];
+    }
+    

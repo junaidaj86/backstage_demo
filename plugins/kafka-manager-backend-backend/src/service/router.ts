@@ -5,7 +5,6 @@ import {
 } from '@backstage/backend-plugin-api';
 import express from 'express';
 import Router from 'express-promise-router';
-import { Kafka } from 'kafkajs';
 import { KafkaApi, KafkaJsApiImpl } from './KafkaApi';
 import { getClusterDetails } from '../config/ClusterReader';
 import _ from 'lodash';
@@ -100,6 +99,52 @@ export async function createRouter(
       res.status(500).json({ error: 'Failed to fetch Kafka cluster details' });
     }
   });
+
+
+  router.get('/fetch-topics', async (req, res) => {
+    try {
+        const clusterId = 'localhost'; // Adjust as necessary to get the correct cluster ID
+        const kafkaApi = kafkaApiByClusterName[clusterId];
+        
+        // Log the kafkaApi being used
+        console.log("=====" + JSON.stringify(kafkaApi, undefined, 2));
+        
+        if (!kafkaApi) {
+            const candidates = Object.keys(kafkaApiByClusterName)
+                .map(n => `"${n}"`)
+                .join(', ');
+            throw new NotFoundError(
+                `Found no configured cluster "${clusterId}", candidates are ${candidates}`
+            );
+        }
+
+       
+        
+        // Fetch topics using the Kafka API
+        const topics = await kafkaApi.api.fetchAllTopicsMetadata(); // Assumes there's a method to fetch topics
+
+        // Process topics to a suitable format (if needed)
+        const formattedTopics = topics?.map(topic => ({
+            name: topic.name,
+            partitions: topic.partitions.map(partition => ({
+                id: partition.partitionId,
+                leader: partition.leader,
+                replicas: partition.replicas,
+                isr: partition.isr,
+                partitionErrorCode: partition.partitionErrorCode,
+            })),
+        }));
+
+        console.log("==============================")
+        console.log(JSON.stringify(formattedTopics, undefined,2));
+
+        res.json({ topics: formattedTopics });
+    } catch (error) {
+        logger.error(`Failed to fetch Kafka topics: ${error.message}`);
+        res.status(500).json({ error: 'Failed to fetch Kafka topics' });
+    }
+});
+
 
   const middleware = MiddlewareFactory.create({ logger, config });
 
