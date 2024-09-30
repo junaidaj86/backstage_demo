@@ -58,8 +58,7 @@ export class KafkaBackendClient implements KafkaApi {
         ...(idToken && { Authorization: `Bearer ${idToken}` }),
       },
     });
-   
-    
+
     if (!response.ok) {
       const payload = await response.text();
       const message = `Request failed with ${response.status} ${response.statusText}, ${payload}`;
@@ -72,9 +71,11 @@ export class KafkaBackendClient implements KafkaApi {
     topicConfig: TopicConfig,
   ): Promise<KafkaCreateTopicResponse> {
     const path = '/create-topic';
-    const url = `${await this.discoveryApi.getBaseUrl('kafka-manager-backend')}${path}`;
+    const url = `${await this.discoveryApi.getBaseUrl(
+      'kafka-manager-backend',
+    )}${path}`;
     const { token: idToken } = await this.identityApi.getCredentials();
-  
+
     const response = await fetch(url, {
       method: 'POST',
       headers: {
@@ -83,17 +84,39 @@ export class KafkaBackendClient implements KafkaApi {
       },
       body: JSON.stringify(topicConfig), // Send topic configuration in the request body
     });
-  
+
     const payload = await response.text(); // Read the response once
-  
-  
+
     if (!response.ok) {
       const message = `Request failed with ${response.status} ${response.statusText}, ${payload}`;
       throw new Error(message); // Use the read payload here for the error message
     }
-  
-  
+
     return JSON.parse(payload); // Use the already-read payload to parse the JSON
   }
-  
+
+  async deleteTopic(topicName: string): Promise<KafkaCreateTopicResponse> {
+    const path = `/delete-topic/${topicName}`;
+    const url = `${await this.discoveryApi.getBaseUrl(
+      'kafka-manager-backend',
+    )}${path}`;
+    const { token: idToken } = await this.identityApi.getCredentials();
+
+    const response = await fetch(url, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(idToken && { Authorization: `Bearer ${idToken}` }), // Add Authorization if the token exists
+      },
+    });
+
+    const payload = await response.text(); // Read the response once
+
+    if (!response.ok) {
+      const message = `Request failed with ${response.status} ${response.statusText}, ${payload}`;
+      throw new Error(message); // Use the read payload here for the error message
+    }
+
+    return JSON.parse(payload); // Use the already-read payload to parse the JSON
+  }
 }

@@ -67,6 +67,11 @@ export type SaslConfig =
       offset: string; // This was not previously included
       lag: string;    // This was not previously included
   }
+
+  export interface DeleteResponse {
+    success: boolean;
+    message: string;
+  }
   
   
     

@@ -91,3 +91,8 @@ export interface TopicMetadata {
 export interface KafkaTopicsResponse {
   topics: TopicMetadata[]; // This should return the topics as an array of TopicMetadata
 }
+
+export interface KafkaCreateTopicResponse {
+  success: boolean;
+  message: string;
+}

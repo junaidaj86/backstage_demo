@@ -90,8 +90,6 @@ export async function createRouter(
 
       const data = kafkaApi.api.getCompleteClusterSummary();
 
-   
-
       res.json({ consumerId, offsets: groupWithTopicOffsets.flat() });
     } catch (error) {
       logger.error(`Failed to fetch Kafka cluster details:`);
@@ -131,10 +129,9 @@ export async function createRouter(
         })),
       }));
 
-
       res.json({ topics: formattedTopics });
     } catch (error) {
-      logger.error(`Failed to fetch Kafka topics: ${error.message}`);
+      logger.error(`Failed to fetch Kafka topics: ${error}`);
       res.status(500).json({ error: 'Failed to fetch Kafka topics' });
     }
   });
@@ -179,6 +176,49 @@ export async function createRouter(
       res.status(500).json({ error: 'Error creating Kafka topic.' });
     }
   });
+
+  router.delete(
+    '/delete-topic/:topicName',
+    async (req: Request, res: Response) => {
+      try {
+        const { topicName } = req.params;
+
+        // Validate input
+        if (!topicName) {
+          return res.status(400).json({ error: 'Topic name is required.' });
+        }
+
+        const clusterId = 'localhost'; // Adjust as necessary
+        const kafkaApi = kafkaApiByClusterName[clusterId];
+
+        if (!kafkaApi) {
+          const candidates = Object.keys(kafkaApiByClusterName)
+            .map(n => `"${n}"`)
+            .join(', ');
+          throw new NotFoundError(
+            `Found no configured cluster "${clusterId}", candidates are ${candidates}`,
+          );
+        }
+
+        const response = await kafkaApi.api.deleteTopic(topicName);
+
+        if (response.success) {
+          res.status(200).json({
+            success: true,
+            message: `Topic "${topicName}" deleted successfully.`,
+          });
+        } else {
+          res.status(500).json({
+            success: false,
+            message: `Failed to delete topic "${topicName}".`,
+          });
+        }
+      } catch (error:any) {
+        logger.error('Error deleting Kafka topic:', error);
+        res.status(500).json({ error: 'Error deleting Kafka topic.' });
+      }
+    },
+  );
 
   const middleware = MiddlewareFactory.create({ logger, config });
 

@@ -1,5 +1,6 @@
 import { Kafka, SeekEntry, Admin, ITopicConfig } from 'kafkajs';
 import {
+  DeleteResponse,
   PartitionMetadata,
   SaslConfig,
   SslConfig,
@@ -172,15 +173,13 @@ export class KafkaJsApiImpl implements KafkaApi {
           const memberMetadata =
             AssignerProtocol.MemberMetadata.decode(memberMetadataBuffer);
 
-
-
-          return memberMetadata.topics.map(topic => {
+          return memberMetadata.topics.map((topic: string) => {
             const assignedPartitions = memberAssignment.assignment[topic]; // Accessing the assignment for this topic
             return {
               name: group.groupId, // Use groupId as the consumer group name
               topic: [topic], // Wrap topic name in an array
               partitions: assignedPartitions
-                ? assignedPartitions.map(partitionId => ({
+                ? assignedPartitions.map((partitionId: number) => ({
                     partition: partitionId,
                     offset: 'N/A', // Placeholder for offset
                   }))
@@ -196,8 +195,6 @@ export class KafkaJsApiImpl implements KafkaApi {
 
       // Flatten the consumerGroups array since each promise returns an array
       const flattenedConsumerGroups = consumerGroups.flat();
-
-     
 
       // Assemble the final response
       const response = {
@@ -349,69 +346,112 @@ export class KafkaJsApiImpl implements KafkaApi {
     await admin.connect();
 
     try {
-        // Step 1: Fetch all topics
-        const topics = await admin.listTopics(); // This should return a list of topic names
+      // Step 1: Fetch all topics
+      const topics = await admin.listTopics(); // This should return a list of topic names
 
-        // Step 2: Fetch metadata for each topic
-        const topicsMetadata = await Promise.all(
-            topics.map(async (topic) => {
-                const metadataResponse = await admin.fetchTopicMetadata({
-                    topics: [topic],
-                });
+      // Step 2: Fetch metadata for each topic
+      const topicsMetadata = await Promise.all(
+        topics.map(async topic => {
+          const metadataResponse = await admin.fetchTopicMetadata({
+            topics: [topic],
+          });
 
-                // Extract topic metadata from the response
-                const topicMetadata = metadataResponse.topics[0]; // Assuming there's only one topic in the response
+          // Extract topic metadata from the response
+          const topicMetadata = metadataResponse.topics[0]; // Assuming there's only one topic in the response
 
-                if (topicMetadata) {
-                    // Fetch the offsets for the topic's partitions
-                    const offsets = await admin.fetchTopicOffsets(topic);
+          if (topicMetadata) {
+            // Fetch the offsets for the topic's partitions
+            const offsets = await admin.fetchTopicOffsets(topic);
 
-                    const partitionsData: PartitionMetadata[] = topicMetadata.partitions.map((partition) => {
-                        const offsetData = offsets.find(offset => offset.partition === partition.partitionId);
-                        const currentOffset = offsetData ? parseInt(offsetData.offset) : 0; // Get current offset or default to 0
-                        const latestOffset = parseInt(offsetData ? offsetData.high : '0'); // Assuming high is the latest offset
-                        const lag = latestOffset - currentOffset; // Calculate lag
+            const partitionsData: PartitionMetadata[] =
+              topicMetadata.partitions.map(partition => {
+                const offsetData = offsets.find(
+                  offset => offset.partition === partition.partitionId,
+                );
+                const currentOffset = offsetData
+                  ? parseInt(offsetData.offset)
+                  : 0; // Get current offset or default to 0
+                const latestOffset = parseInt(
+                  offsetData ? offsetData.high : '0',
+                ); // Assuming high is the latest offset
+                const lag = latestOffset - currentOffset; // Calculate lag
 
-                        return {
-                            partitionId: partition.partitionId,
-                            partitionErrorCode: partition.partitionErrorCode || 0, // default to 0 if not present
-                            leader: partition.leader, // Keep as integer
-                            replicas: partition.replicas.length, // Count of replicas
-                            isr: partition.isr.length, // Count of in-sync replicas
-                            offset: currentOffset.toString(), // Include current offset
-                            lag: lag.toString(), // Include lag
-                        };
-                    });
+                return {
+                  partitionId: partition.partitionId,
+                  partitionErrorCode: partition.partitionErrorCode || 0, // default to 0 if not present
+                  leader: partition.leader, // Keep as integer
+                  replicas: partition.replicas.length, // Count of replicas
+                  isr: partition.isr.length, // Count of in-sync replicas
+                  offset: currentOffset.toString(), // Include current offset
+                  lag: lag.toString(), // Include lag
+                };
+              });
 
-                    // Assuming you want to return the total offset and lag at the topic level
-                    const totalOffsets = offsets.reduce((acc, offset) => acc + parseInt(offset.offset), 0);
-                    const totalLag = offsets.reduce((acc, offset) => acc + (parseInt(offset.high) - parseInt(offset.offset)), 0);
+            // Assuming you want to return the total offset and lag at the topic level
+            const totalOffsets = offsets.reduce(
+              (acc, offset) => acc + parseInt(offset.offset),
+              0,
+            );
+            const totalLag = offsets.reduce(
+              (acc, offset) =>
+                acc + (parseInt(offset.high) - parseInt(offset.offset)),
+              0,
+            );
 
-                    return {
-                        name: topicMetadata.name,
-                        offset: totalOffsets.toString(), // Total offset as string
-                        lag: totalLag.toString(),         // Total lag as string
-                        partitions: partitionsData,        // Ensure this matches PartitionMetadata[]
-                    };
-                }
+            return {
+              name: topicMetadata.name,
+              offset: totalOffsets.toString(), // Total offset as string
+              lag: totalLag.toString(), // Total lag as string
+              partitions: partitionsData, // Ensure this matches PartitionMetadata[]
+            };
+          }
 
-                return null; // Return null if topicMetadata is not found
-            })
-        );
+          return null; // Return null if topicMetadata is not found
+        }),
+      );
 
-        // Step 3: Filter out null results and assert type
-        return topicsMetadata.filter(
-            (metadata): metadata is TopicMetadata => metadata !== null && !metadata.name.startsWith('__')
-        ) as TopicMetadata[];
-
+      // Step 3: Filter out null results and assert type
+      return topicsMetadata.filter(
+        (metadata): metadata is TopicMetadata =>
+          metadata !== null && !metadata.name.startsWith('__'),
+      ) as TopicMetadata[];
     } catch (error) {
-        this.logger.error(`Error fetching all topics metadata: ${error.message}`);
-        throw error; // Rethrow error to handle it properly in the calling function
+      this.logger.error(`Error fetching all topics metadata: ${error}`);
+      throw error; // Rethrow error to handle it properly in the calling function
     } finally {
-        await admin.disconnect();
+      await admin.disconnect();
     }
-}
+  }
 
+  async deleteTopic(topicName: string): Promise<DeleteResponse> {
+    const admin = this.kafka.admin();
 
+    try {
+      await admin.connect();
 
+      // Delete the specified topic
+       await admin.deleteTopics({
+        topics: [topicName],
+        timeout: 5000, // Timeout in milliseconds
+      });
+
+      return {
+        success: true,
+        message: "Successfuly deleted the topic"
+      }; // Will return true if deleted, false if it does not exist
+    } catch (error) {
+      if (error instanceof Error) {
+        // Check if the error is an instance of Error
+        this.logger.error(`Error deleting topic "${topicName}":`, error);
+      } else {
+        this.logger.error(`Unknown error deleting topic "${topicName}":`);
+      }
+      return {
+        success: false,
+        message: "Successfuly deleted the topic"
+      };; // Indicate failure
+    } finally {
+      await admin.disconnect();
+    }
+  }
 }

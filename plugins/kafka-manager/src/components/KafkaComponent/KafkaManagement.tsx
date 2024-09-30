@@ -67,15 +67,18 @@ const fetchTopics = async (kafkaClient: KafkaBackendClient): Promise<TopicMetada
         lag: partition.lag || '0'
       }))
     }));
-
-    console.log("================================")
-    console.log(JSON.stringify(transformedTopics, undefined,2))
-
   return transformedTopics;
 };
 
 const createTopic = async (topicConfig: TopicConfig, kafkaClient: KafkaBackendClient) => {
   const response: KafkaCreateTopicResponse = await kafkaClient.createTopic(topicConfig);
+  return response;
+};
+
+
+const deleteTopic = async (topicName: string, kafkaClient: KafkaBackendClient) => {
+  console.log("start2")
+  const response: KafkaCreateTopicResponse = await kafkaClient.deleteTopic(topicName);
   return response;
 };
 
@@ -150,11 +153,20 @@ export const KafkaManagement = () => {
     if (res.success) {
       loadTopics();
       handleClose();
+    }else{
+      //display error message
     }
   };
 
   const handleDeleteTopic = async (topicName: string) => {
-    setTopics(prevTopics => prevTopics.filter(topic => topic.name !== topicName));
+    console.log("start")
+    const res: KafkaCreateTopicResponse = await deleteTopic(topicName, kafkaClient);
+    if (res.success) {
+      loadTopics();
+      handleClose();
+    }else{
+      //display error message
+    }
   };
 
   const toggleAdvancedSettings = () => setShowAdvanced(prev => !prev);
