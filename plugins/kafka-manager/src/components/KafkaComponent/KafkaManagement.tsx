@@ -23,6 +23,7 @@ import {
   Select,
   InputLabel,
   FormControl,
+  TablePagination,
 } from '@material-ui/core';
 import {
   InfoCard,
@@ -37,8 +38,6 @@ import { discoveryApiRef, identityApiRef } from '@backstage/core-plugin-api';
 import { useApi } from '@backstage/core-plugin-api';
 import { partition } from 'lodash';
 
-
-
 // Example Kafka configuration keys
 const configOptions = [
   { label: 'Cleanup Policy', value: 'cleanup.policy' },
@@ -48,36 +47,31 @@ const configOptions = [
   { label: 'Min In-Sync Replicas', value: 'min.insync.replicas' },
 ];
 
-
-
-const fetchTopics = async (
-  kafkaClient: KafkaBackendClient,
-): Promise<TopicMetadata[]> => { 
+const fetchTopics = async (kafkaClient: KafkaBackendClient): Promise<TopicMetadata[]> => {
   const response: KafkaTopicsResponse = await kafkaClient.fetchTopics();
-  // Access the topics from the response
   const kafkaTopics = response.topics;
 
-    const transformedTopics = kafkaTopics
+  const transformedTopics = kafkaTopics
     .filter(topic => !topic.name.startsWith('__')) // Filter out topics starting with '__'
     .map(topic => ({
-      name: topic.name, // Change 'name' to 'topicName'
-      offset: topic.offset, // Ensure it's a string
-      lag: topic.lag, // Ensure it's a string
+      name: topic.name,
+      offset: topic.offset,
+      lag: topic.lag,
       partitions: topic.partitions.map(partition => ({
-        id: partition.id, // Ensure 'id' matches the required field
-        leader: partition.leader, // Keep as it is
-        replicas: partition.replicas, // Ensure replicas are in array form
-        isr: partition.isr, // Ensure isr is in array form
-        partitionErrorCode: partition.partitionErrorCode || 0, // Default to 0 if not present
-        offset: partition.offset || '0', // Default offset to '0' if not present
-        lag: partition.lag || '0' // Default lag to '0' if not present
+        id: partition.id,
+        leader: partition.leader,
+        replicas: partition.replicas,
+        isr: partition.isr,
+        partitionErrorCode: partition.partitionErrorCode || 0,
+        offset: partition.offset || '0',
+        lag: partition.lag || '0'
       }))
     }));
 
-    return transformedTopics;
+  return transformedTopics;
 };
 
-const createTopic = async (topicConfig: TopicConfig,  kafkaClient: KafkaBackendClient) => {
+const createTopic = async (topicConfig: TopicConfig, kafkaClient: KafkaBackendClient) => {
   const response: KafkaCreateTopicResponse = await kafkaClient.createTopic(topicConfig);
   return response;
 };
@@ -85,7 +79,7 @@ const createTopic = async (topicConfig: TopicConfig,  kafkaClient: KafkaBackendC
 export const KafkaManagement = () => {
   const [topics, setTopics] = useState<TopicMetadata[]>([]);
   const [open, setOpen] = useState(false);
-  const [showAdvanced, setShowAdvanced] = useState(false); // For advanced settings toggle
+  const [showAdvanced, setShowAdvanced] = useState(false);
   const [newTopic, setNewTopic] = useState<TopicConfig>({
     topicName: '',
     numPartitions: 1,
@@ -93,25 +87,27 @@ export const KafkaManagement = () => {
     replicaAssignment: [],
     configEntries: [],
   });
+  
+  // Pagination State
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(5);
 
   const discoveryApi = useApi(discoveryApiRef);
   const identityApi = useApi(identityApiRef);
   const kafkaClient = new KafkaBackendClient({ discoveryApi, identityApi });
 
   const loadTopics = async () => {
-    const topicsData = await fetchTopics(kafkaClient); // Pass the kafkaClient as argument
+    const topicsData = await fetchTopics(kafkaClient);
     setTopics(topicsData);
   };
-  // Fetch topics when component loads
+
   useEffect(() => {
     loadTopics();
   }, []);
 
-  // Handle opening and closing the modal
   const handleClickOpen = () => setOpen(true);
   const handleClose = () => setOpen(false);
 
-  // Handle input change in the modal form
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setNewTopic(prev => ({
@@ -123,19 +119,13 @@ export const KafkaManagement = () => {
     }));
   };
 
-  // Handle config entry change for dropdown and value
-  const handleConfigEntryChange = (
-    index: number,
-    field: string,
-    value: string,
-  ) => {
+  const handleConfigEntryChange = (index: number, field: string, value: string) => {
     const updatedConfigEntries = newTopic.configEntries?.map((entry, i) =>
       i === index ? { ...entry, [field]: value } : entry,
     );
     setNewTopic(prev => ({ ...prev, configEntries: updatedConfigEntries }));
   };
 
-  // Add a new config entry
   const addConfigEntry = () => {
     setNewTopic(prev => ({
       ...prev,
@@ -143,30 +133,33 @@ export const KafkaManagement = () => {
     }));
   };
 
-  // Remove a config entry
   const removeConfigEntry = (index: number) => {
-    const updatedConfigEntries = newTopic.configEntries?.filter(
-      (_, i) => i !== index,
-    );
+    const updatedConfigEntries = newTopic.configEntries?.filter((_, i) => i !== index);
     setNewTopic(prev => ({ ...prev, configEntries: updatedConfigEntries }));
   };
 
-  // Handle topic creation
   const handleCreateTopic = async () => {
     const res: KafkaCreateTopicResponse = await createTopic(newTopic, kafkaClient);
     if (res.success) {
       loadTopics();
-      handleClose(); // Close the modal on success
+      handleClose();
     }
   };
 
   const handleDeleteTopic = async (topicName: string) => {
-    //await deleteTopic(topicName, kafkaClient);
     setTopics(prevTopics => prevTopics.filter(topic => topic.name !== topicName));
   };
 
-  // Toggle advanced settings section
   const toggleAdvancedSettings = () => setShowAdvanced(prev => !prev);
+
+  const handleChangePage = (event: unknown, newPage: number) => {
+    setPage(newPage);
+  };
+
+  const handleChangeRowsPerPage = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setRowsPerPage(parseInt(event.target.value, 10));
+    setPage(0);
+  };
 
   return (
     <Page themeId="tool">
@@ -196,7 +189,7 @@ export const KafkaManagement = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {topics.map((topic, index) => (
+                    {topics.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((topic, index) => (
                       <TableRow key={index}>
                         <TableCell component="th" scope="row">
                           {topic.name}
@@ -219,6 +212,15 @@ export const KafkaManagement = () => {
                     ))}
                   </TableBody>
                 </Table>
+                <TablePagination
+                  rowsPerPageOptions={[5, 10, 25]}
+                  component="div"
+                  count={topics.length}
+                  rowsPerPage={rowsPerPage}
+                  page={page}
+                  onPageChange={handleChangePage}
+                  onRowsPerPageChange={handleChangeRowsPerPage}
+                />
               </TableContainer>
             </InfoCard>
           </Grid>
