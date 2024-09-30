@@ -81,6 +81,7 @@ const createTopic = async (topicConfig: TopicConfig, kafkaClient: KafkaBackendCl
 
 export const KafkaManagement = () => {
   const [topics, setTopics] = useState<TopicMetadata[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const [open, setOpen] = useState(false);
   const [showAdvanced, setShowAdvanced] = useState(false);
   const [newTopic, setNewTopic] = useState<TopicConfig>({
@@ -176,6 +177,12 @@ export const KafkaManagement = () => {
     );
   };
 
+
+  // Filter topics based on the search term
+  const filteredTopics = topics.filter(topic =>
+    topic.name.toLowerCase().includes(searchTerm.toLowerCase())
+);
+
   return (
     <Page themeId="tool">
       <Content>
@@ -192,6 +199,14 @@ export const KafkaManagement = () => {
         <Grid container spacing={3}>
           <Grid item xs={12}>
             <InfoCard title="Topics List">
+              <div>
+              <input
+                type="text"
+                placeholder="Search topics..."
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                style={{ marginBottom: '20px', padding: '8px', width: '300px' }}
+            />
               <TableContainer component={Paper}>
                 <Table>
                   <TableHead>
@@ -204,7 +219,7 @@ export const KafkaManagement = () => {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {topics.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((topic, index) => (
+                    {filteredTopics.slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage).map((topic, index) => (
                       <React.Fragment key={topic.name}>
                         <TableRow
                           hover
@@ -278,6 +293,7 @@ export const KafkaManagement = () => {
                   onRowsPerPageChange={handleChangeRowsPerPage}
                 />
               </TableContainer>
+              </div>
             </InfoCard>
           </Grid>
         </Grid>
