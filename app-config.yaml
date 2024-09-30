@@ -6,6 +6,9 @@ organization:
   name: Scania AB
 
 backend:
+  reading:
+    allow:
+      - host: 'gist.githubusercontent.com'
   # Used for enabling authentication, secret is shared by all backend plugins
   # See https://backstage.io/docs/auth/service-to-service-auth for
   # information on the format
