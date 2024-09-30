@@ -120,6 +120,8 @@ export async function createRouter(
       // Process topics to a suitable format (if needed)
       const formattedTopics = topics?.map(topic => ({
         name: topic.name,
+        offset: topic.offset, // Total offset as string
+        lag: topic.lag,
         partitions: topic.partitions.map(partition => ({
           id: partition.partitionId,
           leader: partition.leader,

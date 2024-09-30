@@ -76,11 +76,15 @@ export interface PartitionMetadata {
   replicas: number[];
   isr: number[];
   partitionErrorCode: number;
+  offset: string;                   // Current offset as a string
+  lag: string;
 }
 
 export interface TopicMetadata {
   name: string; // Should match the topic name
   partitions: PartitionMetadata[]; // Should contain partition information
+  offset: string;                   // Total offsets as a string for the topic
+  lag: string;
 }
 
 // This interface represents the entire response from your Kafka backend

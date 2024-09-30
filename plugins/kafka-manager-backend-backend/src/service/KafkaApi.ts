@@ -1,5 +1,6 @@
 import { Kafka, SeekEntry, Admin, ITopicConfig } from 'kafkajs';
 import {
+  PartitionMetadata,
   SaslConfig,
   SslConfig,
   TopicConfig,
@@ -348,49 +349,69 @@ export class KafkaJsApiImpl implements KafkaApi {
     await admin.connect();
 
     try {
-      // Step 1: Fetch all topics
-      const topics = await admin.listTopics(); // This should return a list of topic names
+        // Step 1: Fetch all topics
+        const topics = await admin.listTopics(); // This should return a list of topic names
 
-      // Step 2: Fetch metadata for each topic
-      const topicsMetadata = await Promise.all(
-        topics.map(async topic => {
-          const metadataResponse = await admin.fetchTopicMetadata({
-            topics: [topic],
-          });
+        // Step 2: Fetch metadata for each topic
+        const topicsMetadata = await Promise.all(
+            topics.map(async (topic) => {
+                const metadataResponse = await admin.fetchTopicMetadata({
+                    topics: [topic],
+                });
 
+                // Extract topic metadata from the response
+                const topicMetadata = metadataResponse.topics[0]; // Assuming there's only one topic in the response
 
-          
-          // Extract topic metadata from the response
-          const topicMetadata = metadataResponse.topics[0]; // Assuming there's only one topic in the response
-          //const topicMetadata = metadataResponse.topics.filter(topic => !topic.name.startsWith('__'));
+                if (topicMetadata) {
+                    // Fetch the offsets for the topic's partitions
+                    const offsets = await admin.fetchTopicOffsets(topic);
 
-          if (topicMetadata) {
-            return {
-              name: topicMetadata.name,
-              partitions: topicMetadata.partitions.map(partition => ({
-                partitionErrorCode: partition.partitionErrorCode, // default: 0
-                partitionId: partition.partitionId,
-                leader: partition.leader,
-                replicas: partition.replicas,
-                isr: partition.isr,
-              })),
-            };
-          }
+                    const partitionsData: PartitionMetadata[] = topicMetadata.partitions.map((partition) => {
+                        const offsetData = offsets.find(offset => offset.partition === partition.partitionId);
+                        const currentOffset = offsetData ? parseInt(offsetData.offset) : 0; // Get current offset or default to 0
+                        const latestOffset = parseInt(offsetData ? offsetData.high : '0'); // Assuming high is the latest offset
+                        const lag = latestOffset - currentOffset; // Calculate lag
 
-          return null; // Return null if topicMetadata is not found
-        }),
-      );
+                        return {
+                            partitionId: partition.partitionId,
+                            partitionErrorCode: partition.partitionErrorCode || 0, // default to 0 if not present
+                            leader: partition.leader, // Keep as integer
+                            replicas: partition.replicas.length, // Count of replicas
+                            isr: partition.isr.length, // Count of in-sync replicas
+                            offset: currentOffset.toString(), // Include current offset
+                            lag: lag.toString(), // Include lag
+                        };
+                    });
 
-      // Step 3: Filter out null results
-      return topicsMetadata.filter(
-        (metadata): metadata is TopicMetadata => metadata !== null && !metadata.name.startsWith('__')
-      );
-      
+                    // Assuming you want to return the total offset and lag at the topic level
+                    const totalOffsets = offsets.reduce((acc, offset) => acc + parseInt(offset.offset), 0);
+                    const totalLag = offsets.reduce((acc, offset) => acc + (parseInt(offset.high) - parseInt(offset.offset)), 0);
+
+                    return {
+                        name: topicMetadata.name,
+                        offset: totalOffsets.toString(), // Total offset as string
+                        lag: totalLag.toString(),         // Total lag as string
+                        partitions: partitionsData,        // Ensure this matches PartitionMetadata[]
+                    };
+                }
+
+                return null; // Return null if topicMetadata is not found
+            })
+        );
+
+        // Step 3: Filter out null results and assert type
+        return topicsMetadata.filter(
+            (metadata): metadata is TopicMetadata => metadata !== null && !metadata.name.startsWith('__')
+        ) as TopicMetadata[];
+
     } catch (error) {
-      this.logger.error(`Error fetching all topics metadata: ${error.message}`);
-      throw error; // Rethrow error to handle it properly in the calling function
+        this.logger.error(`Error fetching all topics metadata: ${error.message}`);
+        throw error; // Rethrow error to handle it properly in the calling function
     } finally {
-      await admin.disconnect();
+        await admin.disconnect();
     }
-  }
+}
+
+
+
 }

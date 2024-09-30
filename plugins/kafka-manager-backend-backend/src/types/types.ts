@@ -54,13 +54,19 @@ export type SaslConfig =
     export interface PartitionMetadata {
       partitionId: number;
       leader: number;
-      replicas: number[];
-      isr: number[];
+      replicas: number;
+      isr: number;
       partitionErrorCode: number;
-    }
-    
-    export interface TopicMetadata {
+      offset: string; // Added
+      lag: string;    // Added
+  }
+  
+  export interface TopicMetadata {
       name: string;
       partitions: PartitionMetadata[];
-    }
+      offset: string; // This was not previously included
+      lag: string;    // This was not previously included
+  }
+  
+  
     

@@ -58,7 +58,8 @@ export class KafkaBackendClient implements KafkaApi {
         ...(idToken && { Authorization: `Bearer ${idToken}` }),
       },
     });
-
+   
+    
     if (!response.ok) {
       const payload = await response.text();
       const message = `Request failed with ${response.status} ${response.statusText}, ${payload}`;
